@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeployment1
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: myapp3label
+  template:
+    metadata:
+      name: myapp3
+      labels:
+        app: myapp3label
+    spec:
+      containers:
+      - name: myapp3
+        image: eglitmyk/myappimage
+        ports:
+        - containerPort: 80
+
+

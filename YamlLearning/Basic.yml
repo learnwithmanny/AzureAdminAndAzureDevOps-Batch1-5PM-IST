@@ -1,0 +1,45 @@
+# Comments
+# Key Value Pairs
+# Dictionary
+# List
+# Multiple List
+# Document Seprator
+
+name: manish #key-value pair or, string
+age: 32
+city: Delhi
+country: india
+
+---
+# Document Separator
+
+Student: # Dictionary
+  name: kalyan
+  age: 20
+  city: Delhi
+  subjects: #List
+  - phy
+  - chem
+  - maths
+  - bio
+  hobbies:
+  - reading
+  - gardening
+  - music
+
+---
+# Document Separator
+
+Student: # Dictionary
+  name: mohan
+  age: 22
+  city: mumbai
+  subjects: #List
+  - phy
+  - chem
+  - maths
+  - computer
+  hobbies:
+  - reading
+  - drawing
+  - travelling

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myrs1
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: myapp2label
+  template:
+    metadata:
+      name: myapp2
+      labels:
+        app: myapp2label
+    spec:
+      containers:
+      - name: myapp2
+        image: eglitmyk/myappimagev1
+        ports:
+        - containerPort: 80
+
+

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontendlbservice
+  labels:
+    app: frontend-app
+spec:
+  type: LoadBalancer # ClusterIp, # NodePort
+  selector:
+    app: frontend-app
+  ports:
+  - name: http
+    port: 80 # Service Port
+    targetPort: 80 # Container Port
