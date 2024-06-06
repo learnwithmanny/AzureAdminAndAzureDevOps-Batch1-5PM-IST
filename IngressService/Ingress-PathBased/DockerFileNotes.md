@@ -6,7 +6,7 @@ The same path needs to be used in ingress service yaml manifest under spec / rul
 	- https://publicipofingress/app1 should open application configured in app1 image 
 	- https://publicipofingress/app2 should open application configured in app2 image
 
-	## Below Yaml should be used for this.
+	Below Yaml should be used for this.
   	apiVersion: networking.k8s.io/v1
 	kind: Ingress
 	metadata:
