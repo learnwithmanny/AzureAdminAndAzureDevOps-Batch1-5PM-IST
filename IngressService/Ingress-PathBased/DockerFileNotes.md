@@ -1,6 +1,7 @@
 # This file explains the process of creating images to be used in Path Based routing of AKS Ingress Service
 To implement path based routing using Ingress in AKS, we need two images. These two images should be deployed in dedicated path.
 The same path needs to be used in ingress service yaml manifest under spec / rule / path. 
+
 For example :
 	https://publicipofingress/app1 should open application configured in app1 image
  
