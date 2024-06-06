@@ -3,8 +3,8 @@ To implement path based routing using Ingress in AKS, we need two images. These 
 The same path needs to be used in ingress service yaml manifest under spec / rule / path. 
 
 For example :
-	https://publicipofingress/app1 should open application configured in app1 image 
-	https://publicipofingress/app2 should open application configured in app2 image
+	#https://publicipofingress/app1 should open application configured in app1 image 
+ 	#https://publicipofingress/app2 should open application configured in app2 image
 
 	# Below Yaml should be used for this.
 	apiVersion: networking.k8s.io/v1
