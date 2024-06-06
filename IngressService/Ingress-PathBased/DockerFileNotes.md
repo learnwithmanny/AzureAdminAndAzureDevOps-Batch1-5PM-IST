@@ -31,7 +31,7 @@ The same path needs to be used in ingress service yaml manifest under spec / rul
 	            name: myapp2-clusterip-service
 	            port:
 	              number: 80
-#------------------------------------------------------------------------------------------#
+
 
 #Image creation process for app1 and app2. 
 Use docker to create image and push image to docker hub.
