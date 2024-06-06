@@ -4,30 +4,31 @@ The same path needs to be used in ingress service yaml manifest under spec / rul
 For example :
 https://publicipofingress/app1 should open application configured in app1 image
 https://publicipofingress/app2 should open application configured in app2 image
- # Below Yaml should be used for this.
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: nginxapp1-ingress-service
-spec:
-  ingressClassName: nginx
-  rules:
-  - http:
-      paths:
-      - path: /app1
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp1-clusterip-service
-            port:
-              number: 80
-      - path: /app2
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp2-clusterip-service
-            port:
-              number: 80
+
+	# Below Yaml should be used for this.
+	apiVersion: networking.k8s.io/v1
+	kind: Ingress
+	metadata:
+	  name: nginxapp1-ingress-service
+	spec:
+	  ingressClassName: nginx
+	  rules:
+	  - http:
+	      paths:
+	      - path: /app1
+	        pathType: Prefix
+	        backend:
+	          service:
+	            name: myapp1-clusterip-service
+	            port:
+	              number: 80
+	      - path: /app2
+	        pathType: Prefix
+	        backend:
+	          service:
+	            name: myapp2-clusterip-service
+	            port:
+	              number: 80
 #------------------------------------------------------------------------------------------#
 
 #Image creation process for app1 and app2. 
