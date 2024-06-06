@@ -33,10 +33,10 @@ The same path needs to be used in ingress service yaml manifest under spec / rul
 	              number: 80
 
 
-#Image creation process for app1 and app2. 
+- Image creation process for app1 and app2. 
 Use docker to create image and push image to docker hub.
 
-#App1
+##App1
 
 1.	Copy all source code files at one location. let's say c:\app1
 2.	create a Dockerfile with below code and keep at same location. In this case at c:\app1
@@ -65,7 +65,7 @@ Use docker to create image and push image to docker hub.
 
 #------------------------------------------------------------------------------------------#
 
-#App2
+##App2
 
 1.	Copy all source code files at one location. let's say c:\app2
 2.	create a Dockerfile with below code and keep at same location. In this case at c:\app2
