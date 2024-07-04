@@ -1,0 +1,70 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'YOUR_AZURE_SUBSCRIPTION'  # Replace with your Azure service connection name
+  resourceGroupName: 'MyResourceGroup'
+  appServicePlan: 'MyAppServicePlan'
+  webAppName: 'MyUniqueWebAppName'
+  location: 'centralindia'  # Adjust as needed
+
+stages:
+- stage: CreateResources
+  displayName: 'Create Azure Resources'
+  jobs:
+  - job: CreateResources
+    displayName: 'Create Resources Job'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Create resource group
+          az group create --name $(resourceGroupName) --location $(location)
+
+          # Create App Service plan
+          az appservice plan create --name $(appServicePlan) --resource-group $(resourceGroupName) --sku B1 --location $(location)
+
+          # Create Web App
+          az webapp create --name $(webAppName) --resource-group $(resourceGroupName) --plan $(appServicePlan) --runtime "PHP|8.3"
+
+- stage: DeployApp
+  displayName: 'Deploy HTML App'
+  dependsOn: CreateResources
+  jobs:
+  - deployment: DeployHTMLApp
+    displayName: 'Deploy HTML App Job'
+    environment: 'production'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)'
+              Contents: '**/*'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/htmlapp'
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/htmlapp'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/htmlapp.zip'
+              replaceExistingArchive: true
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: 'webApp'
+              appName: $(webAppName)
+              package: '$(Build.ArtifactStagingDirectory)/htmlapp.zip'

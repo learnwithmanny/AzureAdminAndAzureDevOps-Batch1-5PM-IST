@@ -1,0 +1,118 @@
+trigger:
+- main
+
+pool:
+  name: 'Default'
+  vmImage: 'UbuntuVM'
+
+variables:
+  azureSubscription: 'm2804serviceconnection'  # Replace with your Azure service connection name
+  resourceGroupName: 'LCRG'
+  appServicePlan: 'LCPlan'
+  webAppName: 'lcapp3221'
+  location: 'centralindia'  # Adjust as needed
+  
+stages:
+- stage: InstallAzureCli
+  displayName: 'Install Azure CLI and Deploy App'
+  jobs:
+  - job: InstallAzureCLI
+    displayName: 'Install Azure CLI and Verify Installation'
+    steps:
+    - script: |
+        echo "Updating package lists..."
+        sudo apt-get update
+      
+        echo "Installing prerequisites..."
+        sudo apt-get install -y curl apt-transport-https lsb-release gpg
+
+        echo "Adding Azure CLI repository..."
+        curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
+        sudo mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+        AZ_REPO=$(lsb_release -cs)
+        echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+
+        echo "Installing Azure CLI..."
+        sudo apt-get update
+        sudo apt-get install -y azure-cli
+      displayName: 'Install Azure CLI'
+
+    - script: |
+        echo "Verifying Azure CLI installation..."
+        az --version
+      displayName: 'Verify Azure CLI Installation'
+
+
+- stage: CreateResources
+  displayName: 'Create Azure Resources'
+  jobs:
+  - job: CreateResources
+    displayName: 'Create Resources Job'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Create resource group
+          az group create --name $(resourceGroupName) --location $(location)
+
+          # Create App Service plan
+          az appservice plan create --name $(appServicePlan) --resource-group $(resourceGroupName) --sku F1 --is-linux --location $(location)
+
+          # Create Web App
+          az webapp create --name $(webAppName) --resource-group $(resourceGroupName) --plan $(appServicePlan) --runtime "PHP|8.3"
+
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    displayName: 'Build Job'
+    steps:
+    - task: UseNode@1
+      inputs:
+        versionSpec: '16.x'
+      displayName: 'Install Node.js 14.x'
+    - script: |
+        node -v
+        npm -v
+      displayName: 'Verify Node.js and npm Installation'
+    - script: |
+       echo "Installing dependencies"
+       npm install --retry 3 --fetch-retries 5 --fetch-retry-factor 10
+      displayName: 'Install Dependencies'
+      continueOnError: false
+    - task: CopyFiles@2
+      inputs:
+       contents: '**/*'
+       targetFolder: $(Build.ArtifactStagingDirectory)
+    - task: PublishBuildArtifacts@1
+      inputs:
+       pathToPublish: $(Build.ArtifactStagingDirectory)
+       artifactName: MyBuildOutputs
+
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployWeb
+    displayName: 'Deploy to Azure Web App'
+    environment: 'production'
+    pool:
+      name: 'Default'
+      vmImage: 'UbuntuVM'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: MyBuildOutputs
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'm2804serviceconnection'
+              appType: 'webApp'
+              appName: 'lcapp3221'
+              package: $(Pipeline.Workspace)/MyBuildOutputs

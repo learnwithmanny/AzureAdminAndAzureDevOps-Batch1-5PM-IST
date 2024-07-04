@@ -1,0 +1,60 @@
+trigger:
+- main
+
+pool:
+  name: 'Default'
+  vmImage: 'UbuntuVM'
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    displayName: 'Build Job'
+    steps:
+    - task: UseNode@1
+      inputs:
+        versionSpec: '16.x'
+      displayName: 'Install Node.js 14.x'
+    - script: |
+        node -v
+        npm -v
+      displayName: 'Verify Node.js and npm Installation'
+    - script: |
+       echo "Installing dependencies"
+       npm install --retry 3 --fetch-retries 5 --fetch-retry-factor 10
+      displayName: 'Install Dependencies'
+      continueOnError: false
+    - task: CopyFiles@2
+      inputs:
+       contents: '**/*'
+       targetFolder: $(Build.ArtifactStagingDirectory)
+    - task: PublishBuildArtifacts@1
+      inputs:
+       pathToPublish: $(Build.ArtifactStagingDirectory)
+       artifactName: MyBuildOutputs
+
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployWeb
+    displayName: 'Deploy to Azure Web App'
+    environment: 'production'
+    pool:
+      name: 'Default'
+      vmImage: 'UbuntuVM'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: MyBuildOutputs
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'm2804serviceconnection'
+              appType: 'webApp'
+              appName: 'lcapp12345'
+              package: $(Pipeline.Workspace)/MyBuildOutputs

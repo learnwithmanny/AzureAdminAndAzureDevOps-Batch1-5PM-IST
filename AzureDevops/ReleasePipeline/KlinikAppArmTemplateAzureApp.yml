@@ -1,0 +1,85 @@
+trigger:
+- main
+
+pool:
+  name: 'Default'
+  vmImage: 'UbuntuVM'
+
+variables:
+  azureSubscription: 'm2804serviceconnection'
+  resourceGroupName: 'LCRG'
+  location: 'centralindia'
+  templateFile: 'azuredeploy.json'
+  appName: 'LcAPP12345'
+  #packagePath: 'path/to/your/app/package.zip'  # Update this path to your app package location
+
+stages:
+- stage: DeployInfrastructure
+  jobs:
+  - job: ARMTemplateDeployment
+    displayName: 'Deploy Azure Resources using ARM Template'
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        azureResourceManagerConnection: '$(azureSubscription)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resourceGroupName)'
+        location: '$(location)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(templateFile)'
+        deploymentMode: 'Incremental'
+
+
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    displayName: 'Build Job'
+    steps:
+    - task: UseNode@1
+      inputs:
+        versionSpec: '16.x'
+      displayName: 'Install Node.js 14.x'
+    - script: |
+        node -v
+        npm -v
+      displayName: 'Verify Node.js and npm Installation'
+    - script: |
+       echo "Installing dependencies"
+       npm install --retry 3 --fetch-retries 5 --fetch-retry-factor 10
+      displayName: 'Install Dependencies'
+      continueOnError: false
+    - task: CopyFiles@2
+      inputs:
+       contents: '**/*'
+       targetFolder: $(Build.ArtifactStagingDirectory)
+    - task: PublishBuildArtifacts@1
+      inputs:
+       pathToPublish: $(Build.ArtifactStagingDirectory)
+       artifactName: MyBuildOutputs
+
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployWeb
+    displayName: 'Deploy to Azure Web App'
+    environment: 'production'
+    pool:
+      name: 'Default'
+      vmImage: 'UbuntuVM'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: MyBuildOutputs
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'm2804serviceconnection'
+              appType: 'webApp'
+              appName: 'LcAPP12345'
+              package: $(Pipeline.Workspace)/MyBuildOutputs
